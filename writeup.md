@@ -21,7 +21,7 @@ The goals / steps of this project are the following:
 
 ###1. Describe your pipeline. As part of the description, explain how you modified the draw_lines() function.
 
-My pipeline consisted of 5 steps. First, I converted the images to grayscale, then I applied a gaussian blur with a kernel size of 5. On that image I ran canny edge detection with the thresholds from the course and chose a polygon-shaped mask to concentrate only on the relevant parts of the image. I then ran a hough line detection and combined the resulting lines with the original image to get a first rudimentary lane detection result.
+First, I converted the images to grayscale, then I applied a gaussian blur with a kernel size of 5. On that image I ran canny edge detection with the thresholds from the course and chose a polygon-shaped mask to concentrate only on the relevant parts of the image. I then ran a hough line detection and combined the resulting lines with the original image to get a first rudimentary lane detection result.
 
 I then spent some time finding better parameters for the HoughLinesP function. I tried closing the gaps in the dashed lane lines, that worked out except for a few gaps that were just too long and probably would have rendered the rest of the detection unstable. As sometimes the algorithm wouldn't detect any line, I increased rho and reduced the number of necessary votes in order to be less strict.
 
