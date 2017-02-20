@@ -53,7 +53,7 @@ The challenge video at the end presented some new difficulties:
 
 #### Filter over multiple frames
 
-As the original pipeline performed quite nicely on the challenge video, except for some outliers when driving past the tree, I decided to try a filter over time. For this, I keep track of the last N (N=15) detected lanes and draw their average. Also, if no lane is detected, I just take the last valid average.
+As the original pipeline performed quite nicely on the challenge video, except for some outliers when driving past the tree, I decided to try a filter over time. For this, I kept track of the last N (N=15) detected lanes and draw their average. Also, if no lane was detected, I'd just take the last valid average.
 
 #### Shortcomings
 
