@@ -1,102 +1,68 @@
 #**Finding Lane Lines on the Road** 
-[![Udacity - Self-Driving Car NanoDegree](https://s3.amazonaws.com/udacity-sdc/github/shield-carnd.svg)](http://www.udacity.com/drive)
 
-<img src="laneLines_thirdPass.jpg" width="480" alt="Combined Image" />
+##Writeup
 
-Overview
 ---
 
-When we drive, we use our eyes to decide where to go.  The lines on the road that show us where the lanes are act as our constant reference for where to steer the vehicle.  Naturally, one of the first things we would like to do in developing a self-driving car is to automatically detect lane lines using an algorithm.
+**Finding Lane Lines on the Road**
 
-In this project you will detect lane lines in images using Python and OpenCV.  OpenCV means "Open-Source Computer Vision", which is a package that has many useful tools for analyzing images.  
-
-To complete the project, two files will be submitted: a file containing project code and a file containing a brief write up explaining your solution. We have included template files to be used both for the [code](https://github.com/udacity/CarND-LaneLines-P1/blob/master/P1.ipynb) and the [writeup](https://github.com/udacity/CarND-LaneLines-P1/blob/master/writeup_template.md).The code file is called P1.ipynb and the writeup template is writeup_template.md 
-
-To meet specifications in the project, take a look at the requirements in the [project rubric](https://review.udacity.com/#!/rubrics/322/view)
+The goals / steps of this project are the following:
+* Make a pipeline that finds lane lines on the road
+* Reflect on your work in a written report
 
 
-Creating a Great Writeup
----
-For this project, a great writeup should provide a detailed response to the "Reflection" section of the [project rubric](https://review.udacity.com/#!/rubrics/322/view). There are three parts to the reflection:
-1. Describe the pipeline
-2. Identify any shortcomings
-3. Suggest possible improvements
+[//]: # (Image References)
 
-We encourage using images in your writeup to demonstrate how your pipeline works.  
+[image1]: ./examples/grayscale.jpg "Grayscale"
 
-All that said, please be concise!  We're not looking for you to write a book here: just a brief description.
-
-You're not required to use markdown for your writeup.  If you use another method please just submit a pdf of your writeup. Here is a link to a [writeup template file](https://github.com/udacity/CarND-LaneLines-P1/blob/master/writeup_template.md). 
-
-
-The Project
 ---
 
-## If you have already installed the [CarND Term1 Starter Kit](https://github.com/udacity/CarND-Term1-Starter-Kit/blob/master/README.md) you should be good to go!   If not, you can install the starter kit or follow the install instructions below to get started on this project. ##
+### Reflection
 
-**Step 1:** Getting setup with Python
+###1. Describe your pipeline. As part of the description, explain how you modified the draw_lines() function.
 
-To do this project, you will need Python 3 along with the numpy, matplotlib, and OpenCV libraries, as well as Jupyter Notebook installed. 
+First, I converted the images to grayscale, then I applied a gaussian blur with a kernel size of 5. On that image I ran canny edge detection with the thresholds from the course and chose a polygon-shaped mask to concentrate only on the relevant parts of the image. I then ran a hough line detection and combined the resulting lines with the original image to get a first rudimentary lane detection result.
 
-We recommend downloading and installing the Anaconda Python 3 distribution from Continuum Analytics because it comes prepackaged with many of the Python dependencies you will need for this and future projects, makes it easy to install OpenCV, and includes Jupyter Notebook.  Beyond that, it is one of the most common Python distributions used in data analytics and machine learning, so a great choice if you're getting started in the field.
+I then spent some time finding better parameters for the HoughLinesP function. I tried closing the gaps in the dashed lane lines, that worked out except for a few gaps that were just too long and probably would have rendered the rest of the detection unstable. As sometimes the algorithm wouldn't detect any line, I increased rho and reduced the number of necessary votes in order to be less strict.
 
-Choose the appropriate Python 3 Anaconda install package for your operating system <A HREF="https://www.continuum.io/downloads" target="_blank">here</A>.   Download and install the package.
+#### Modifying the draw_lines() function
+In order to draw a single line on the left and right lanes, I modified the draw_lines() function by first converting each line to m and b parameters for slope and offset (ignoring the ones that would cause calculation errors). Then I looked at the resulting m values and defined thresholds to either classify them as the left or right lane line. The corresponding m and b values were averaged, so in the end I had exactly two pairs of m and b. For each one of them, I calculated the points where they would intersect the horizontal bottom line of the image and the horizontal (almost-)center of the image. These were the points I passed to the original line-drawing function.
 
-If you already have Anaconda for Python 2 installed, you can create a separate environment for Python 3 and all the appropriate dependencies with the following command:
 
-`>  conda create --name=yourNewEnvironment python=3 anaconda`
+###2. Identify potential shortcomings with your current pipeline
 
-`>  source activate yourNewEnvironment`
+The pipeline yields good results on the first two videos, but the more complex challenge showed me that it has some shortcomings.
 
-**Step 2:** Installing OpenCV
+* The area of interest is hardcoded. Even though I use imshape, I have some hardcoded offsets in there. This is a disadvantage when using images of various resolution for example. Also, if the camera is not in the center of the vehicle, those offsets would have to change.
+* I don't think that a car driving in front of me can currently be handled without issues
+* The pipeline is optimized for straight or not too curvy lanes.
+* Changing lighting conditions / mixing up bright and dark are not accounted for
 
-Once you have Anaconda installed, first double check you are in your Python 3 environment:
+###3. Suggest possible improvements to your pipeline
 
-`>python`    
-`Python 3.5.2 |Anaconda 4.1.1 (x86_64)| (default, Jul  2 2016, 17:52:12)`  
-`[GCC 4.2.1 Compatible Apple LLVM 4.2 (clang-425.0.28)] on darwin`  
-`Type "help", "copyright", "credits" or "license" for more information.`  
-`>>>`   
-(Ctrl-d to exit Python)
+* The area of interest could probably be detected automatically.
+* One could try to detect curves in the image, instead of straight lines.
+* The detected lines could be filtered over time, to smooth out misdetections. I actually tried that for the challenge:
 
-run the following commands at the terminal prompt to get OpenCV:
+###4. Challenge
 
-`> pip install pillow`  
-`> conda install -c menpo opencv3=3.1.0`
+The challenge video at the end presented some new difficulties:
+* The road had a slightly stronger curve
+* The car's hood was in the video, so that was detected as a horizontal line. Fortunately that's filtered by draw_lines()
+* The lighting conditions were more challenging, especially when driving past a tree. In some frames, the lane lines weren't detected at all.
 
-then to test if OpenCV is installed correctly:
+#### Filter over multiple frames
 
-`> python`  
-`>>> import cv2`  
-`>>>`  (i.e. did not get an ImportError)
+As the original pipeline performed quite nicely on the challenge video, except for some outliers when driving past the tree, I decided to try a filter over time. For this, I kept track of the last N (N=15) detected lanes and draw their average. Also, if no lane was detected, I'd just take the last valid average.
 
-(Ctrl-d to exit Python)
+#### Shortcomings
 
-**Step 3:** Installing moviepy  
+* If the initial guess is bad, it takes 15 frames for a lane line to normalize.
+* If the lane lines are lost permanently, we will continue following the last valid average.
+* The filter makes detection more stable, but also less dynamic and hides shortcomings that might be fixed in other parts of the pipeline.
 
-We recommend the "moviepy" package for processing video in this project (though you're welcome to use other packages if you prefer).  
+#### Enabling / Disabling
 
-To install moviepy run:
-
-`>pip install moviepy`  
-
-and check that the install worked:
-
-`>python`  
-`>>>import moviepy`  
-`>>>`  (i.e. did not get an ImportError)
-
-(Ctrl-d to exit Python)
-
-**Step 4:** Opening the code in a Jupyter Notebook
-
-You will complete this project in a Jupyter notebook.  If you are unfamiliar with Jupyter Notebooks, check out <A HREF="https://www.packtpub.com/books/content/basics-jupyter-notebook-and-python" target="_blank">Cyrille Rossant's Basics of Jupyter Notebook and Python</A> to get started.
-
-Jupyter is an ipython notebook where you can run blocks of code and see results interactively.  All the code for this project is contained in a Jupyter notebook. To start Jupyter in your browser, run the following command at the terminal prompt (be sure you're in your Python 3 environment!):
-
-`> jupyter notebook`
-
-A browser window will appear showing the contents of the current directory.  Click on the file called "P1.ipynb".  Another browser window will appear displaying the notebook.  Follow the instructions in the notebook to complete the project.  
-
-**Step 5:** Complete the project and submit both the Ipython notebook and the project writeup
+* The filter is enabled for videos per default
+* It can be disabled in the process_image(image) function definition, by setting the second argument to find_lane to False.
 
